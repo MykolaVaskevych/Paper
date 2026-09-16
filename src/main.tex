@@ -22,15 +22,18 @@
 %----------------------------------------------------------------------------------------
 
 \newcommand{\thesistitle}{Title of Work} % Your thesis title, this is used in the title and abstract
-\newcommand{\degree}{MAI (XXXXX Engineering)} % Replace with your degree name, this is used in the title page and abstract
+\newcommand{\degree}{Future Network Systems} % Replace with your degree name, this is used in the title page and abstract
 \newcommand{\typeofthesis}{dissertation} % dissertation, Final Year Project, report, etc.
-\newcommand{\authorname}{Dara \'O S\'uilleabh\'ain} % Your name, this is used in the title page and PDF stuff
+\newcommand{\authorname}{Mykola Vaskevych} % Your name, this is used in the title page and PDF stuff
 %% Do not put your Student ID in the document, as TCD will not publish
 %% documents that contain both your name and your Student ID.
-\newcommand{\supervisor}{Associate Prof. Jane Kelly} % replace with the name of your supervisor
+% \newcommand{\supervisor}{Associate Prof. Stephen Farrell} % replace with the name of your supervisor
+\newcommand{\supervisor}{Associate Prof. Research Fellow, Stephen Farrell} % replace with the name of your supervisor
 %\newcommand{\cosupervisor}{Dr Alex Lee} % replace with the name of your co-supervisor if you have one
+%TODO keywords
 \newcommand{\keywords}{this, that, more} % Replace with keywords for your thesis
-\newcommand{\school}{\href{https://www.tcd.ie/Engineering/}{School of Engineering}} % Your school's name and URL, this is used in the title page
+\newcommand{\school}{\href{https://www.tcd.ie/scss/}{School of Computer Science and Statistics}} % Your school's name and URL, this is used in the title page
+ 
 %Edited by HS for engineering
 
 %% Comment out the next line if you don't want a department to appear
@@ -71,18 +74,18 @@
 %% It's personal taste but...
 %% Uncomment the following block if you want your name and ID at the top of
 %% (almost) every page.
-
-%\pagestyle{fancy}
-%\fancyhf{} % sets both header and footer to nothing
-%\renewcommand{\headrulewidth}{0pt}
-%\cfoot{\thepage}
-%\ifdefined\authorid
-%\chead{\it \authorname\ (\authorid)}
-%\else
-%\chead{\it \authorname}
-%\fi
-%% End of block
-
+%
+% \pagestyle{fancy}
+% \fancyhf{} % sets both header and footer to nothing
+% \renewcommand{\headrulewidth}{0pt}
+% \cfoot{\thepage}
+% \ifdefined\authorid
+% \chead{\it \authorname\ (\authorid)}
+% \else
+% \chead{\it \authorname}
+% \fi
+% % End of block
+%
 %% It is good practise to make your font sans-serif to improve the accessibility of your document.  Comment out the following line to disable it (but you really should not)
 \renewcommand{\familydefault}{\sfdefault} %use the sans-serif font as default
 
@@ -192,7 +195,7 @@ Note that Roman mathematical symbols are typically in a serif font in italics.
 \bibliographystyle{IEEEtran} %Changed to IEEETran by HS
 %\bibliographystyle{unsrt}
 
-\bibliography{bibs/sample}
+\bibliography{bibs/ref}
 \appendix
 \renewcommand{\thechapter}{A\arabic{chapter}}
 \input{appendix/appendix.tex}
