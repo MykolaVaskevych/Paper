@@ -1,1 +1,5 @@
 # The built PDF is committed on purpose, so it can be read without a LaTeX setup.
+
+# Neovim's build output (vimtex -> tectonic V1). The PDF that gets committed is
+# build/default/default.pdf, written by `tectonic -X build`.
+build/nvim/
