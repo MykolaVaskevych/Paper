@@ -49,9 +49,18 @@ jobs:
           branch=${branch:-master}
           echo "Overleaf branch: $branch"
 
-          # Never force. A rejection means Overleaf has edits GitHub has not seen yet.
+          git fetch overleaf "$branch" || true
+
+          # Never force from CI. A rejection is either Overleaf having edits GitHub has not
+          # seen, or the two histories being unrelated - which is how Overleaf's Git
+          # integration starts out. Say which, rather than clobbering a dissertation.
           if ! git push overleaf "HEAD:$branch"; then
-            echo "::error::Push rejected. Overleaf has changes that are not on GitHub." \
-                 "Run the 'Pull from Overleaf' workflow, resolve it, then push again."
+            if ! git merge-base "overleaf/$branch" HEAD >/dev/null 2>&1; then
+              echo "::error::Overleaf's history is unrelated to this repo's. Align them once by" \
+                   "force pushing this repo to Overleaf from your machine, then CI can take over."
+            else
+              echo "::error::Push rejected: Overleaf has changes that are not on GitHub." \
+                   "Run the 'Pull from Overleaf' workflow, resolve it, then push again."
+            fi
             exit 1
           fi

@@ -54,6 +54,15 @@ jobs:
           git fetch overleaf "$branch"
           remote=$(git rev-parse "overleaf/$branch")
 
+          # Overleaf's Git integration exposes the project as its own squashed history.
+          # If it shares no commit with this repo, comparing them is meaningless and a PR
+          # would propose replacing main with Overleaf's unrelated tree. Stop instead.
+          if ! git merge-base "$remote" HEAD >/dev/null 2>&1; then
+            echo "::error::Overleaf's history is unrelated to this repo's, so the two cannot be" \
+                 "compared. Align them once with a force push to Overleaf, then this will work."
+            exit 1
+          fi
+
           if git merge-base --is-ancestor "$remote" HEAD; then
             echo "Overleaf has nothing new." >> "$GITHUB_STEP_SUMMARY"
             exit 0
