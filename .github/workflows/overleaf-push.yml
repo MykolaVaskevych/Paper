@@ -1,0 +1,57 @@
+name: Push to Overleaf
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Shared with overleaf-pull so the two never run at the same time.
+concurrency:
+  group: overleaf-sync
+  cancel-in-progress: false
+
+jobs:
+  push:
+    # Without this, the pull job's own commit would trigger this job.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - id: gate
+        env:
+          PROJECT: ${{ secrets.OVERLEAF_PROJECT_ID }}
+          TOKEN: ${{ secrets.OVERLEAF_TOKEN }}
+        run: |
+          if [ -z "$PROJECT" ] || [ -z "$TOKEN" ]; then
+            echo "OVERLEAF_PROJECT_ID / OVERLEAF_TOKEN not set - skipping." >> "$GITHUB_STEP_SUMMARY"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          fetch-depth: 0
+
+      - name: Push to Overleaf
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          PROJECT: ${{ secrets.OVERLEAF_PROJECT_ID }}
+          OVERLEAF_TOKEN: ${{ secrets.OVERLEAF_TOKEN }}
+        run: |
+          set -euo pipefail
+          git remote add overleaf "https://git.overleaf.com/$PROJECT"
+          # Keep the token out of the remote URL so it cannot end up in logs.
+          git config credential.helper '!f() { echo username=git; echo "password=$OVERLEAF_TOKEN"; }; f'
+
+          # Overleaf's Git integration has no branches; ask it what its one branch is called.
+          branch=$(git ls-remote --symref overleaf HEAD | awk '/^ref:/{sub("refs/heads/","",$2); print $2; exit}')
+          branch=${branch:-master}
+          echo "Overleaf branch: $branch"
+
+          # Never force. A rejection means Overleaf has edits GitHub has not seen yet.
+          if ! git push overleaf "HEAD:$branch"; then
+            echo "::error::Push rejected. Overleaf has changes that are not on GitHub." \
+                 "Run the 'Pull from Overleaf' workflow, resolve it, then push again."
+            exit 1
+          fi

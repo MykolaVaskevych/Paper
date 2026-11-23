@@ -1,0 +1,78 @@
+name: Pull from Overleaf
+
+on:
+  schedule:
+    # Hourly at :17, to stay off the top-of-hour crush.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: overleaf-sync
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+      - id: gate
+        env:
+          PROJECT: ${{ secrets.OVERLEAF_PROJECT_ID }}
+          TOKEN: ${{ secrets.OVERLEAF_TOKEN }}
+        run: |
+          if [ -z "$PROJECT" ] || [ -z "$TOKEN" ]; then
+            echo "OVERLEAF_PROJECT_ID / OVERLEAF_TOKEN not set - skipping." >> "$GITHUB_STEP_SUMMARY"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          fetch-depth: 0
+
+      - name: Fetch Overleaf and integrate
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          PROJECT: ${{ secrets.OVERLEAF_PROJECT_ID }}
+          OVERLEAF_TOKEN: ${{ secrets.OVERLEAF_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git remote add overleaf "https://git.overleaf.com/$PROJECT"
+          git config credential.helper '!f() { echo username=git; echo "password=$OVERLEAF_TOKEN"; }; f'
+
+          branch=$(git ls-remote --symref overleaf HEAD | awk '/^ref:/{sub("refs/heads/","",$2); print $2; exit}')
+          branch=${branch:-master}
+          git fetch overleaf "$branch"
+          remote=$(git rev-parse "overleaf/$branch")
+
+          if git merge-base --is-ancestor "$remote" HEAD; then
+            echo "Overleaf has nothing new." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if git merge-base --is-ancestor HEAD "$remote"; then
+            # Clean fast-forward: nothing on GitHub can be lost.
+            git merge --ff-only "$remote"
+            git push origin main
+            echo "Fast-forwarded main to Overleaf." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          # Both sides moved. Never merge that automatically - open a PR instead.
+          pr_branch="overleaf-sync/$(date -u +%Y%m%d-%H%M)"
+          git checkout -b "$pr_branch" "$remote"
+          git push origin "$pr_branch"
+          gh pr create --base main --head "$pr_branch" \
+            --title "Updates from Overleaf" \
+            --body "Overleaf and main have both changed, so this was not merged automatically. Review and merge." \
+            || echo "::warning::Branch pushed; open the pull request by hand."
+          echo "Opened $pr_branch for review - main was left alone." >> "$GITHUB_STEP_SUMMARY"
