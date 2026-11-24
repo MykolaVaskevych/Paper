@@ -1,7 +1,7 @@
 \chapter{Appendinx: Draft}
 
 \subsection{what and why}
-what is CDN
+what and why CDN
 
 \subsection{siby2023quic}
 paper~\cite{siby2023quic}
@@ -27,6 +27,26 @@ The biggest problem, though, is that they never measured the latency overhead, a
 
 \subsection{https://pulls.name/blog/2024-06-05-eval-first-daita-servers/}
 paper~\cite{pulls2024daitaeval}
+
+How we combat traffic analysis: this is how DAITA works.
+
+\textbf{\textit{DAITA}} has been developed together with Computer Science at Karlstad University and uses three types of cover traffic to resist traffic analysis.
+\begin{enumerate}
+    \item  Constant Packet Sizes
+The size of network packets can be particularly revealing, especially small packets, so DAITA makes all packets sent over the VPN the same constant size.
+    \item  Random Background Traffic
+ By unpredictably interspersing dummy packets into the traffic, DAITA masks the routine signals to and from your device. This makes it harder for observers to distinguish between meaningful activity and background noise.
+    \item  Data Pattern Distortion
+When visiting websites (or doing any other activity that causes significant traffic), DAITA modifies the traffic pattern by unpredictably sending cover traffic in both directions between client and VPN server. This distorts the recognizable pattern of a website visit, resisting accurate identification of the site. [from mullvad paper itself]
+\end{enumerate}
+
+\textbf{DAITA} reduces the success rate of both DF and RF attacks, with more prolonged traces (US servers) offering slightly less protection. The protection costs around 2-4 MiB of bandwidth overhead and 1-3 seconds of delay per website visit, depending on server (and website) location.
+
+The defenses are padding-only defenses that create so much padding traffic that congestion occurs, implicitly introducing notable delays. In the future, defenses should explicitly create short, useful (for protection) delays and aim to account for congestion to minimize delays.
+
+
+\textbf{negative result of blogs experiment}
+The user experience of enabling DAITA when browsing with Mullvad Browser is less than changing the server location from Europe to the US. Recall that the Karlstad University website is hosted in Sweden, so the traffic crossed the Atlantic twice in our experiment (unlike most regular website visits most users do). Not great, but not terrible.
 
 \subsection{paper2}
 paper~\cite{dyer2012peekaboo}
