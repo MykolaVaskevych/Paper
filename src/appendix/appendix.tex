@@ -2,7 +2,7 @@
 
 \subsection{what and why}
 what and why CDN
-
+what and why encripted tunnel
 \subsection{siby2023quic}
 paper~\cite{siby2023quic}
 
@@ -50,6 +50,23 @@ The user experience of enabling DAITA when browsing with Mullvad Browser is less
 
 \subsection{paper2}
 paper~\cite{dyer2012peekaboo}
+
+\subsection{dyer2012peekaboo}
+paper~\cite{dyer2012peekaboo}
+
+\textbf{\textit{Key stuff}}
+\begin{itemize}
+    \item Closed-world simulation on SSH tunnel traces from 2006 and 2009, 9 countermeasures vs 7 attacks~\cite[p.~332]{dyer2012peekaboo}.
+    \item \textit{``None of the countermeasures are effective.''}~\cite[p.~332]{dyer2012peekaboo}
+    \item Best countermeasure still gives $>$80\% accuracy at $k=128$ (random guess 0.7\%)~\cite[p.~332]{dyer2012peekaboo}.
+    \item Bandwidth-only classifier: 98\% at $k=2$, 41\% at $k=128$~\cite[p.~333]{dyer2012peekaboo}.
+    \item Countermeasures \textit{``must incur both bandwidth and latency overheads''}~\cite[p.~341]{dyer2012peekaboo}.
+    \item BuFLO: 418.8\% bandwidth overhead to get accuracy down to 5.1\% at $k=128$~\cite[p.~343]{dyer2012peekaboo}.
+\end{itemize}
+
+\textbf{my understanding}
+
+This paper is old (2012), and it basically shows that padding alone is not worth it and it's better to look into the application layer. It uses three types of countermeasures: SSH/TLS/IPsec-style random padding, other padding (Linear, Exponential, Pad to MTU), and distribution-based ones (Direct Target Sampling and Traffic Morphing). The first adds a random amount of padding up to 255 bytes, the second rounds packets up to fixed sizes, and the third makes one website's packet sizes look like another's. They have a bandwidth overhead from about 3\% to 66\%, and more overhead did not mean more protection. The attacks are LL, H and P, from Liberatore and Levine, Herrmann et al.\ and Panchenko et al. In general, they take recorded traces, apply the countermeasures in simulation and train classifiers to guess the website. Padding fails as a defence because it hides individual packet sizes, but not the total time, total bandwidth and bursts. They use stuff like total time, bandwidth and burst sizes and call it features, with classifiers like SVM and naive Bayes, and they also test their own defence called BuFLO. Basically, they show that even a classifier using only bandwidth gets 98\% accuracy with 2 websites. \textbf{The paper shows that the defences do not work because these coarse features still leak,} and hiding them costs both bandwidth and latency. They point to the application layer because there the defence knows about the actual web requests, and because it works by changing the requests themselves instead of padding packets blindly. \textbf{That's where QUIC and TLS come into play, because they let the application control padding itself} (QUIC PADDING frames, TLS~1.3 record padding).
 
 \subsection{paper3}
 paper~\cite{cai2014tamaraw}
