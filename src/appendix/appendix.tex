@@ -3,6 +3,23 @@
 \subsection{Siby}
 paper~\cite{siby2023quic}
 
+\textbf{\textit{QUIC.}} QUIC is a connection-oriented protocol built on top of UDP
+that aims to provide low-latency, multiplexed, secure communication
+with less head-of-line blocking and faster connection migration [7].
+QUIC was standardized in May 2021 by the IETF. QUIC is the trans-
+port protocol for HTTP/3. Adoption of QUIC and HTTP/3 has been
+rising (as of June 2023, they are used by 26\% of the top 10 million
+websites [17]). Of particular relevance for our work is the QUIC
+PADDING Frame. The IETF QUIC standard describes it as a frame
+with no semantic value, that can be used to increase packets size and
+to provide protection against traffic analysis [8].
+
+Paper did simplified test, for general public, which included testing different attacks and defenses without using VPN, which negatively impacted defence, and proved that Padding alone is not sufficient.
+
+
+
+
+
 \subsection{paper1}
 paper~\cite{pulls2024daitaeval}
 
