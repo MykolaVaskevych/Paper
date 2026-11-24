@@ -48,15 +48,14 @@ The defenses are padding-only defenses that create so much padding traffic that 
 \textbf{negative result of blogs experiment}
 The user experience of enabling DAITA when browsing with Mullvad Browser is less than changing the server location from Europe to the US. Recall that the Karlstad University website is hosted in Sweden, so the traffic crossed the Atlantic twice in our experiment (unlike most regular website visits most users do). Not great, but not terrible.
 
-\subsection{paper2}
-paper~\cite{dyer2012peekaboo}
+
 
 \subsection{dyer2012peekaboo}
 paper~\cite{dyer2012peekaboo}
 
 \textbf{\textit{Key stuff}}
 \begin{itemize}
-    \item Closed-world simulation on SSH tunnel traces from 2006 and 2009, 9 countermeasures vs 7 attacks~\cite[p.~332]{dyer2012peekaboo}.
+    \item Closed-world simulation on SSH tunnel traces from 2006 and 2009, 9 defences vs 7 attacks~\cite[p.~332]{dyer2012peekaboo}.
     \item \textit{``None of the countermeasures are effective.''}~\cite[p.~332]{dyer2012peekaboo}
     \item Best countermeasure still gives $>$80\% accuracy at $k=128$ (random guess 0.7\%)~\cite[p.~332]{dyer2012peekaboo}.
     \item Bandwidth-only classifier: 98\% at $k=2$, 41\% at $k=128$~\cite[p.~333]{dyer2012peekaboo}.
@@ -68,8 +67,135 @@ paper~\cite{dyer2012peekaboo}
 
 This paper is old (2012), and it basically shows that padding alone is not worth it and it's better to look into the application layer. It uses three types of countermeasures: SSH/TLS/IPsec-style random padding, other padding (Linear, Exponential, Pad to MTU), and distribution-based ones (Direct Target Sampling and Traffic Morphing). The first adds a random amount of padding up to 255 bytes, the second rounds packets up to fixed sizes, and the third makes one website's packet sizes look like another's. They have a bandwidth overhead from about 3\% to 66\%, and more overhead did not mean more protection. The attacks are LL, H and P, from Liberatore and Levine, Herrmann et al.\ and Panchenko et al. In general, they take recorded traces, apply the countermeasures in simulation and train classifiers to guess the website. Padding fails as a defence because it hides individual packet sizes, but not the total time, total bandwidth and bursts. They use stuff like total time, bandwidth and burst sizes and call it features, with classifiers like SVM and naive Bayes, and they also test their own defence called BuFLO. Basically, they show that even a classifier using only bandwidth gets 98\% accuracy with 2 websites. \textbf{The paper shows that the defences do not work because these coarse features still leak,} and hiding them costs both bandwidth and latency. They point to the application layer because there the defence knows about the actual web requests, and because it works by changing the requests themselves instead of padding packets blindly. \textbf{That's where QUIC and TLS come into play, because they let the application control padding itself} (QUIC PADDING frames, TLS~1.3 record padding).
 
-\subsection{paper3}
+\subsection{cai2014tamaraw}
 paper~\cite{cai2014tamaraw}
 
-\subsection{paper4}
+
+
+\textbf{\textit{Paper with positive results.}}
+Interesting paper, because it actually finally shows positive results: \textit{``Tamaraw provides an `existence proof' for efficient, secure defenses.''}~\cite[Abstract]{cai2014tamaraw}
+It explains what an ideal attacker is: one for which \textit{``two websites are distinguishable unless they generate the exact same sequence of network traffic observations''}~\cite[\S1]{cai2014tamaraw}.
+
+Then it explains why other papers before this one failed:
+\begin{enumerate}
+    \item Defences were tested against the attacks of the day, which gives \textit{``only a lower bound on the security of a defense''}~\cite[\S1]{cai2014tamaraw}.
+    \item They hid the wrong features: \textit{``most early defenses focused exclusively on packet sizes''}~\cite[\S1]{cai2014tamaraw}, while packet ordering leaks at least as much.
+    \item \textit{``all current WF defenses fail to cover the total traffic size, as doing so is difficult and would necessarily incur a large traffic overhead.''}~\cite[\S3.1]{cai2014tamaraw}
+\end{enumerate}
+
+\textbf{\textit{What is BuFLO?}}
+\textit{``Packets are sent at fixed intervals with fixed length, and if no data needs to be sent, dummy packets are sent instead.''}~\cite[\S4.1]{cai2014tamaraw}
+problem: \textit{``BuFLO unnecessarily wastes bandwidth hiding the number of upstream packets and does not adequately hide the total number of downstream packets.''}~\cite[\S1]{cai2014tamaraw}
+
+\textbf{\textit{Why Tamaraw is better.}}
+Tamaraw is basically a tuned BuFLO: it sends fixed 750-byte packets at fixed rates, with a different rate for each direction, and pads the number of packets in each direction, so websites end up looking the same. \textit{``Tamaraw offers a maximum attack-accuracy guarantee''}~\cite[\S6.1]{cai2014tamaraw}
+The attacker accuracy against Tamaraw can actually go down to 3.4\% at 199\% bandwidth overhead, and 0.4\% at 687\%, while BuFLO at the same 199\% still allows 41.5\%~\cite[Table~1]{cai2014tamaraw}. They found out that latency is still bad, around 320\% time overhead~\cite[\S6.2]{cai2014tamaraw}, which is basically about 4 times longer to load the page.
+\textit{``A Tamaraw is a lightweight cousin of the Buffalo.''}~\cite[\S6]{cai2014tamaraw}
+
+\textbf{\textit{Attack vectors used.}}
+\begin{itemize}
+    \item Ideal attacker, an upper bound on any attack~\cite[\S1, \S6.2.1]{cai2014tamaraw}.
+    \item Four single-feature classifiers: F1 unique packet lengths, F2 packet length frequencies, F3 packet ordering, F4 total load time~\cite[\S3.3]{cai2014tamaraw}.
+    \item Size-only attacker $A_S$, used to derive the bandwidth lower bound~\cite[\S5.1.2]{cai2014tamaraw}.
+    \item Tor numbers taken from Cai et al.'s earlier Ca-DLevenshtein attack~\cite[\S6.2.2]{cai2014tamaraw}.
+\end{itemize}
+
+\textbf{\textit{Defence vectors used.}}
+\begin{itemize}
+    \item PadM (pad to MTU) and PadE (pad to next power of 2)~\cite[\S4.1]{cai2014tamaraw}.
+    \item Wr-Morph, traffic morphing with google.com as target~\cite[\S4.1]{cai2014tamaraw}.
+    \item HTTPOS, client-side HTTP/TCP obfuscation~\cite[\S4.1]{cai2014tamaraw}.
+    \item Pa-Decoy, loading a decoy page in the background~\cite[\S4.1]{cai2014tamaraw}.
+    \item BuFLO ($d=1500$, $\rho=20$\,ms, $\tau=10$\,s)~\cite[\S4.1]{cai2014tamaraw}.
+    \item Tamaraw~\cite[\S6]{cai2014tamaraw}.
+\end{itemize}
+
+\textbf{\textit{Summary.}}
+This may be useful for my paper because it gives a lower bound on how much bandwidth any defence needs,
+
+
+\subsection{gong2020front}
 paper~\cite{gong2020front}
+
+\textbf{Note:} This paper is Tor only, where \textit{``Tor uses its own datagrams called cells which are all padded to the same length.''}~\cite[p.~720]{gong2020front} So only timing and direction leak. On TLS and QUIC, packet sizes will still leak, and I should cover that gap.
+
+\textbf{\textit{Paper idea.}}
+Do not delay real packets, just add fake ones. \textit{``We call them zero-delay lightweight defenses, meaning they do not delay the client's packets and they only add a small number of dummy packets to real traffic.''}~\cite[p.~717]{gong2020front}
+
+\textbf{\textit{FRONT and GLUE.}}
+FRONT and GLUE strategies, also mentioned in the first paper~\cite{siby2023quic}. Zero latency overhead. FRONT beats WTF-PAD, which was \textit{``the previous best zero-delay defense''}~\cite[p.~718]{gong2020front}.
+\begin{itemize}
+    \item FRONT: \textit{``FRONT focuses on obfuscating the trace front with dummy packets.''}~\cite[p.~717]{gong2020front}
+    \item GLUE: \textit{``GLUE adds dummy packets between separate traces so that they appear to the attacker as a long consecutive trace, rendering the attacker unable to find their start or end points, let alone classify them.''}~\cite[p.~717]{gong2020front}
+\end{itemize}
+
+\textbf{\textit{Types of defence.}}
+\textit{``We classify the strategies they use to defeat WF attacks into three categories, roughly in order of overhead: obfuscation, confusion, and regularization.''}~\cite[p.~718]{gong2020front}
+\begin{itemize}
+    \item Obfuscation: Traffic Morphing, HTTPOS, WTF-PAD, FRONT.
+    \item Confusion: Decoy, Supersequence, Walkie-Talkie.
+    \item Regularization: BuFLO, CS-BuFLO, Tamaraw. \textit{``Fixing the packet rate delays user traffic significantly.''}~\cite[p.~718]{gong2020front}
+    \item GLUE is in its own category~\cite[p.~719]{gong2020front}.
+\end{itemize}
+
+\textbf{\textit{Types of attack.}}~\cite[pp.~718--719]{gong2020front}
+\begin{itemize}
+    \item kNN (Wang et al., 2014): k-nearest neighbours with learned feature weights.
+    \item CUMUL (Panchenko et al., 2016): SVM on the cumulative representation of a trace.
+    \item kFP (Hayes and Danezis, 2016): random forests combined with k-nearest neighbours.
+    \item DF (Sirinam et al., 2018): deep convolutional neural network, first attack to break WTF-PAD.
+\end{itemize}
+
+\textbf{\textit{Metrics.}}~\cite[p.~720]{gong2020front}
+\begin{itemize}
+    \item True positive rate (TPR).
+    \item Precision: \textit{``the proportion of positive (i.e. monitored) classifications that are correct''}, taking the base rate into account.
+    \item F1 score, combining TPR and precision.
+    \item Latency overhead: \textit{``the extra time taken to transmit real packets, divided by the original transmission time''}.
+    \item Data overhead: \textit{``the total amount of dummy data divided by the total amount of real data''}.
+    \item Information leakage per feature, measured with WeFDE~\cite[p.~723]{gong2020front}.
+\end{itemize}
+
+\textbf{\textit{Dataset.}}~\cite[pp.~722--723]{gong2020front}
+\begin{itemize}
+    \item DS-19: collected February--April 2019 with Tor Browser 8.5a7; homepages of the Alexa top 100 visited 100 times each as monitored pages, plus 10{,}000 non-monitored pages. Open world, 10-fold cross validation.
+    \item DS-14: Wang's 2014 dataset, used to check FRONT on different websites.
+\end{itemize}
+
+\textbf{\textit{How FRONT works.}}~\cite[pp.~721--722]{gong2020front}
+\begin{enumerate}
+    \item Client and proxy each sample a number of dummy packets.
+    \item Each samples a padding window
+    \item Dummy packet times are sampled from a Rayleigh distribution, so most dummies are sent at the start of the trace.
+    \item Real packets are sent with no delay
+\end{enumerate}
+
+
+\textbf{\textit{FRONT quotes.}}
+\begin{itemize}
+    \item \textit{``The first few seconds of each trace, which we call the trace front, leaks the most useful features for WF classification.''}~\cite[p.~721]{gong2020front}
+    \item \textit{``FRONT adds dummy packets in a highly random manner, ensuring different traces of the same webpage look different to each other in total length, packet ordering, and packet directions.''}~\cite[p.~721]{gong2020front}
+    \item \textit{``FT-1 outperforms WTF-PAD in defending against every attack, especially kNN and DF.''}~\cite[p.~723]{gong2020front}
+    \item \textit{``This experiment indicates that trace fronts do leak a lot of information.''}~\cite[p.~724]{gong2020front}
+    \item On Tamaraw: \textit{``it delays packets by 78\% and almost doubles the bandwidth consumed''}~\cite[p.~730]{gong2020front}
+\end{itemize}
+
+\textbf{\textit{GLUE quotes.}}
+\begin{itemize}
+    \item When pages are visited back to back, \textit{``all known WF attacks cannot succeed in classifying the $\ell$-trace thus generated, even if they are properly trained and aware of such a possibility''}~\cite[p.~725]{gong2020front}
+    \item Attacker told the number of pages: \textit{``When $\ell = 16$, all attacks achieve less than 5\% TPR.''}~\cite[p.~728]{gong2020front}
+    \item Attacker has to find it: \textit{``When $\ell$ increases to 16, all WF attacks have less than 1\% precision.''}~\cite[p.~728]{gong2020front}
+    \item \textit{``The data overhead is 3\% to 13\% for strict GLUE, 22\% to 44\% for the normal GLUE, and 35\% to 53\% for lenient GLUE.''}~\cite[p.~729]{gong2020front}
+\end{itemize}
+
+\textbf{\textit{Limitations.}}
+\begin{itemize}
+    \item \textit{``it performed worse on very large web pages''}~\cite[p.~730]{gong2020front}
+    \item \textit{``FRONT's performance may be affected if the client has poor network conditions''}~\cite[p.~730]{gong2020front}
+    \item \textit{``we did not design our defenses to guarantee future success''}~\cite[p.~730]{gong2020front}
+    \item \textit{``we cannot prove that split decision and split finding are unsolvable''}~\cite[p.~730]{gong2020front}
+    \item \textit{``As we cannot prove the impossibility of identifying glue traces in traffic, we leave the question open as future work''}~\cite[p.~730]{gong2020front}
+\end{itemize}
+
+\textbf{\textit{Why useful.}}
+Seems like this paper is the most relevant one to my topic, because DAITA is a padding-only, zero-delay style defence, and FRONT is implemented as a Maybenot machine (as an approximation, since Maybenot cannot schedule padding before a download starts)~\cite{maybenot2023}. \textbf{TODO: Trace front and randomness ideas to test in my experiments.}
