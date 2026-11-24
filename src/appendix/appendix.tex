@@ -1,6 +1,9 @@
 \chapter{Appendinx: Draft}
 
-\subsection{Siby}
+\subsection{what and why}
+
+
+\subsection{siby2023quic}
 paper~\cite{siby2023quic}
 
 \textbf{\textit{QUIC.}} QUIC is a connection-oriented protocol built on top of UDP
@@ -16,11 +19,13 @@ to provide protection against traffic analysis [8].
 
 Paper did simplified test, for general public, which included testing different attacks and defenses without using VPN, which negatively impacted defence, and proved that Padding alone is not sufficient.
 
+They tried to identify how QUIC works and how padding can help defend against traffic analysis. First, they measured the baseline without any protection and got over 90\% accuracy using a Random Forest classifier. Then they added padding, but it barely helped, as they still got around 80\%. After that, they tried adding fake packets, which brought the accuracy down to around 30\%. I guess that's an improvement, but it's still far from ideal, considering random guessing would be below 1\%.
+
+The biggest problem, though, is that they never measured the latency overhead, and the additional padding almost doubled the bandwidth usage.
 
 
 
-
-\subsection{paper1}
+\subsection{https://pulls.name/blog/2024-06-05-eval-first-daita-servers/}
 paper~\cite{pulls2024daitaeval}
 
 \subsection{paper2}
